@@ -7,30 +7,40 @@ type Pair struct {
 	second int
 }
 
-var initialState []Pair
-
-func setInitialState(locs []Pair) {
-	initialState = locs
+type InitialState struct {
+	coords []Pair
+	values []int
 }
 
-func isFromInitialState(row int, col int) bool {
-	for i := range initialState {
-		if row == initialState[i].first && col == initialState[i].second {
-			return true
+var initialState InitialState
+
+func setInitialState(board *[9][9]int, locs []Pair, values []int) {
+	initialState.coords = locs
+	initialState.values = values
+	for i := 0; i < len(locs); i++ {
+		board[locs[i].first][locs[i].second] = values[i]
+	}
+}
+
+func isFromInitialState(row int, col int) (bool, int) {
+	for i := range initialState.coords {
+		if row == initialState.coords[i].first && col == initialState.coords[i].second {
+			return true, initialState.values[i]
 		}
 	}
-	return false
+	return false, -1
 }
 
 func placeMove(board *[9][9]int, row int, col int, move int) {
-	if !isFromInitialState(row, col) {
+	status, _ := isFromInitialState(row, col)
+	if !status {
 		board[row][col] = move
 	}
 }
 
 func checkGrid(board *[9][9]int, gridX int, gridY int) (bool, int) {
 	mistakes := 0
-	var valuesMap [9]int
+	var valuesMap [10]int
 	for i := gridX; i < gridX+3; i++ {
 		for j := gridY; j < gridY+3; j++ {
 			if board[i][j] == -1 {
@@ -48,7 +58,7 @@ func checkGrid(board *[9][9]int, gridX int, gridY int) (bool, int) {
 
 func checkRow(board *[9][9]int, row int) (bool, int) {
 	mistakes := 0
-	var valuesMap [9]int
+	var valuesMap [10]int
 	for i := 0; i < 9; i++ {
 		if board[row][i] == -1 {
 			mistakes++
@@ -64,7 +74,7 @@ func checkRow(board *[9][9]int, row int) (bool, int) {
 
 func checkCol(board *[9][9]int, col int) (bool, int) {
 	mistakes := 0
-	var valuesMap [9]int
+	var valuesMap [10]int
 	for i := 0; i < 9; i++ {
 		if board[i][col] == -1 {
 			mistakes++
