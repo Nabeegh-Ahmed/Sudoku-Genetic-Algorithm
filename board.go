@@ -12,9 +12,7 @@ type InitialState struct {
 	values []int
 }
 
-var initialState InitialState
-
-func setInitialState(board *[9][9]int, locs []Pair, values []int) {
+func setInitialState(board *[9][9]int, locs []Pair, values []int, initialState *InitialState) {
 	initialState.coords = locs
 	initialState.values = values
 	for i := 0; i < len(locs); i++ {
@@ -22,7 +20,7 @@ func setInitialState(board *[9][9]int, locs []Pair, values []int) {
 	}
 }
 
-func isFromInitialState(row int, col int) (bool, int) {
+func isFromInitialState(row int, col int, initialState *InitialState) (bool, int) {
 	for i := range initialState.coords {
 		if row == initialState.coords[i].first && col == initialState.coords[i].second {
 			return true, initialState.values[i]
@@ -31,8 +29,8 @@ func isFromInitialState(row int, col int) (bool, int) {
 	return false, -1
 }
 
-func placeMove(board *[9][9]int, row int, col int, move int) {
-	status, _ := isFromInitialState(row, col)
+func placeMove(board *[9][9]int, row int, col int, move int, initialState *InitialState) {
+	status, _ := isFromInitialState(row, col, initialState)
 	if !status {
 		board[row][col] = move
 	}

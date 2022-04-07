@@ -6,9 +6,8 @@ import (
 )
 
 var PopulationSize = 7000
-var Outliers = 0.1
-var CrossOvers = 0.6
-var Mutants = 0.4
+
+// var Mutants = 0.4
 
 func randBetween(a int, b int) int {
 	span := (b - a) + 1
@@ -26,11 +25,11 @@ type Individual struct {
 	fitness int
 }
 
-func createIndividual() Individual {
+func createIndividual(state *InitialState) Individual {
 	newIndividual := Individual{fitness: 0}
 	for i := 0; i < 9; i++ {
 		for j := 0; j < 9; j++ {
-			status, value := isFromInitialState(i, j)
+			status, value := isFromInitialState(i, j, state)
 			if !status {
 				newIndividual.gene[i][j] = randBetween(1, 9)
 			} else {
@@ -54,17 +53,17 @@ func sortPopulation(individuals []Individual) []Individual {
 	return individuals
 }
 
-func generatePopulation() []Individual {
+func generatePopulation(state *InitialState) []Individual {
 	var population []Individual
 	for i := 0; i < PopulationSize; i++ {
-		individual := createIndividual()
+		individual := createIndividual(state)
 		individual.fitness = fitnessFunction(&individual.gene)
 		population = append(population, individual)
 	}
 	return population
 }
 
-func mutate(individual Individual) Individual {
+func mutate(individual Individual, state *InitialState) Individual {
 	mutant := Individual{}
 	mutant.gene = individual.gene
 
@@ -75,7 +74,7 @@ func mutate(individual Individual) Individual {
 			randomX := randBetween(0, 8)
 			randomY := randBetween(0, 8)
 
-			status, _ := isFromInitialState(randomX, randomY)
+			status, _ := isFromInitialState(randomX, randomY, state)
 			if !status {
 				i++
 				mutant.gene[randomX][randomY] = randBetween(1, 9)
@@ -90,7 +89,7 @@ func mutate(individual Individual) Individual {
 		// mutate a random row
 		randomRow := randBetween(0, 8)
 		for i := 0; i < 9; i++ {
-			status, _ := isFromInitialState(randomRow, i)
+			status, _ := isFromInitialState(randomRow, i, state)
 			if !status {
 				mutant.gene[randomRow][i] = randBetween(1, 9)
 			}
@@ -99,7 +98,7 @@ func mutate(individual Individual) Individual {
 		// mutate a random column
 		randomCol := randBetween(0, 8)
 		for i := 0; i < 9; i++ {
-			status, _ := isFromInitialState(i, randomCol)
+			status, _ := isFromInitialState(i, randomCol, state)
 			if !status {
 				mutant.gene[i][randomCol] = randBetween(1, 9)
 			}
@@ -111,7 +110,7 @@ func mutate(individual Individual) Individual {
 
 		for i := randomGridX * 3; i < randomGridX*3+3; i++ {
 			for j := randomGridY * 3; j < randomGridY*3+3; j++ {
-				status, _ := isFromInitialState(i, j)
+				status, _ := isFromInitialState(i, j, state)
 				if !status {
 					mutant.gene[i][j] = randBetween(1, 9)
 				}
@@ -122,7 +121,7 @@ func mutate(individual Individual) Individual {
 	return mutant
 }
 
-func naturalSelection(individuals []Individual) []Individual {
+func naturalSelection(individuals []Individual, state *InitialState, Outliers float64, CrossOvers float64) []Individual {
 	var buffer []Individual
 	outliersRange := int(float64(PopulationSize) * Outliers)
 	crossOverRange := int(float64(PopulationSize) * CrossOvers)
@@ -149,22 +148,28 @@ func naturalSelection(individuals []Individual) []Individual {
 		buffer = append(buffer, offspring1)
 	}
 	for i := outliersRange + crossOverRange; i < PopulationSize; i++ {
-		buffer = append(buffer, mutate(individuals[randBetween(0, PopulationSize-1)]))
+		buffer = append(buffer, mutate(individuals[randBetween(0, PopulationSize-1)], state))
 	}
 	return buffer
 }
 
-func geneticAlgorithm() {
-	population := generatePopulation()
+func geneticAlgorithm(state *InitialState) {
+	population := generatePopulation(state)
+	var max = 0.6
+	var min = 0.1
+
+	var Outliers = min + rand.Float64()*(max-min)
+	var CrossOvers = max + min - Outliers
+
 	for i := 0; i < 100000; i++ {
 		population = sortPopulation(population)
-		fmt.Println(population[0].fitness, " ", i)
+		fmt.Println(population[0].fitness, " ", i, " (", Outliers, " ", CrossOvers, ")")
 		// printBoard(population[0].gene)
 		if population[0].fitness == 0 {
 			printBoard(population[0].gene)
 			break
 		}
-		population = naturalSelection(population)
+		population = naturalSelection(population, state, Outliers, CrossOvers)
 	}
 	printBoard(population[0].gene)
 }
